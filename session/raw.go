@@ -4,22 +4,32 @@ import (
 	"database/sql"
 	"strings"
 
+	"github.com/ForeRunner88/geeorm/clause"
+	"github.com/ForeRunner88/geeorm/dialect"
 	"github.com/ForeRunner88/geeorm/log"
+	"github.com/ForeRunner88/geeorm/schema"
 )
 
 type Session struct {
-	db      *sql.DB
-	sql     strings.Builder
-	sqlVars []interface{}
+	db       *sql.DB
+	dialect  dialect.Dialect
+	refTable *schema.Schema
+	clause   clause.Clause
+	sql      strings.Builder
+	sqlVars  []interface{}
 }
 
-func New(db *sql.DB) *Session {
-	return &Session{db: db}
+func New(db *sql.DB, dialect dialect.Dialect) *Session {
+	return &Session{
+		db:      db,
+		dialect: dialect,
+	}
 }
 
 func (s *Session) Clear() {
 	s.sql.Reset()
 	s.sqlVars = nil
+	s.clause = clause.Clause{}
 }
 
 func (s *Session) DB() *sql.DB {
@@ -45,9 +55,9 @@ func (s *Session) Exec() (result sql.Result, err error) {
 
 // QueryRow gets a record from db
 func (s *Session) QueryRow() *sql.Row {
-    defer s.Clear()
-    log.Info(s.sql.String(), s.sqlVars)
-    return s.DB().QueryRow(s.sql.String9), s.sqlVars...)
+	defer s.Clear()
+	log.Info(s.sql.String(), s.sqlVars)
+	return s.DB().QueryRow(s.sql.String(), s.sqlVars...)
 }
 
 // QueryRows gets a list of records from db
